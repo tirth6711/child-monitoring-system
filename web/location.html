@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Child Tracking System</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<style>
+body{
+margin:0;
+font-family:Arial;
+text-align:center;
+}
+
+#map{
+height:70vh;
+width:100%;
+}
+
+button{
+padding:10px 20px;
+margin:10px;
+font-size:16px;
+background:green;
+color:white;
+border:none;
+cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Live Child Tracking System</h2>
+
+<div id="map"></div>
+
+<h3>Distance: <span id="distance">0</span> meters</h3>
+
+<button onclick="openGoogleMap()">Open in Google Maps</button>
+
+<script>
+
+var espIP = "http://10.232.142.132";   // CHANGE THIS TO YOUR ESP32 IP
+
+var map = L.map('map').setView([21,72],16);
+
+/* Normal Map */
+var normal = L.tileLayer(
+'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+{maxZoom:22}
+).addTo(map);
+
+/* Satellite Map */
+var satellite = L.tileLayer(
+'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+{maxZoom:22}
+);
+
+/* Map Layer Control */
+L.control.layers({
+"Normal":normal,
+"Satellite":satellite
+}).addTo(map);
+
+/* Father Marker */
+var fatherMarker = L.marker([21,72]).addTo(map);
+
+/* Child Marker (RED) */
+var childMarker = L.marker([21,72],{
+icon:L.icon({
+iconUrl:"https://maps.google.com/mapfiles/ms/icons/red-dot.png",
+iconSize:[32,32]
+})
+}).addTo(map);
+
+/* Line Between Them */
+var line = L.polyline([], {color:'blue'}).addTo(map);
+
+var fatherLat=0;
+var fatherLon=0;
+var childLat=0;
+var childLon=0;
+
+/* SEND FATHER LOCATION */
+function sendFatherLocation(position)
+{
+fatherLat = position.coords.latitude;
+fatherLon = position.coords.longitude;
+
+fetch(espIP + "/location?lat=" + fatherLat + "&lon=" + fatherLon)
+.catch(err=>console.log(err));
+}
+
+/* GET LOCATION PERMISSION */
+function startLocation()
+{
+if(navigator.geolocation)
+{
+navigator.geolocation.watchPosition(
+sendFatherLocation,
+function(error){console.log(error);},
+{enableHighAccuracy:true}
+);
+}
+}
+
+/* UPDATE MAP */
+function updateMap()
+{
+fetch(espIP + "/data")
+.then(res=>res.json())
+.then(data=>{
+
+childLat=data.childLat;
+childLon=data.childLon;
+
+var father=[fatherLat,fatherLon];
+var child=[childLat,childLon];
+
+fatherMarker.setLatLng(father);
+childMarker.setLatLng(child);
+
+line.setLatLngs([father,child]);
+
+map.panTo(father);
+
+document.getElementById("distance").innerHTML=data.distance;
+
+})
+.catch(err=>console.log(err));
+}
+
+setInterval(updateMap,1000);
+
+/* OPEN GOOGLE MAP ROUTE */
+function openGoogleMap()
+{
+
+if(childLat==0){
+alert("Location not loaded yet");
+return;
+}
+
+var url =
+"https://www.google.com/maps/dir/" +
+fatherLat + "," + fatherLon + "/" +
+childLat + "," + childLon;
+
+window.open(url,"_blank");
+
+}
+
+/* START LOCATION WHEN PAGE LOADS */
+window.onload = function()
+{
+startLocation();
+}
+
+</script>
+
+</body>
+</html>
