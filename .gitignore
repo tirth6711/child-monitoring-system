@@ -1,5 +1,52 @@
-.vscode/
-*.exe
-*.o
-*.out
+# PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
+.clang_complete
+.gcc-flags.json
+
+# Arduino IDE
+*.hex
+*.elf
+*.bin
 build/
+*.o
+*.a
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor backups
+*~
+*.swp
+*.swo
+
+# Environment and secrets
+.env
+secrets.h
+credentials.h
+wifi_credentials.h
+
+# Logs
+*.log
+
+# Web dashboard (if using Node tooling)
+node_modules/
+dist/
+.cache/
+
+# Python (if any scripts are used for testing or data logging)
+__pycache__/
+*.pyc
+venv/
+env/
+
+# Misc
+*.tmp
+*.bak
